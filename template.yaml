@@ -30,13 +30,14 @@ Resources:
     Metadata:
       BuildMethod: python3.12
 
-
   # POST /login
   PublicLoginFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: src/handlers_public
       Handler: login_post.lambda_handler
+      Layers:
+        - !Ref CommonLayer
       Events:
         HttpApiLogin:
           Type: HttpApi
@@ -57,6 +58,8 @@ Resources:
     Properties:
       CodeUri: src/handlers_public
       Handler: forgot_password_post.lambda_handler
+      Layers:
+        - !Ref CommonLayer
       Events:
         HttpApiForgotPassword:
           Type: HttpApi
@@ -77,6 +80,8 @@ Resources:
     Properties:
       CodeUri: src/handlers_public
       Handler: refresh_token_post.lambda_handler
+      Layers:
+        - !Ref CommonLayer
       Events:
         HttpApiRefreshToken:
           Type: HttpApi
@@ -97,6 +102,8 @@ Resources:
     Properties:
       CodeUri: src/handlers_public
       Handler: validate_token_post.lambda_handler
+      Layers:
+        - !Ref CommonLayer
       Events:
         HttpApiValidateToken:
           Type: HttpApi
