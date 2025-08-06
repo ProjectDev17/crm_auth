@@ -1,17 +1,23 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 
+###############################################################################
+# GLOBALS
+###############################################################################
 Globals:
   Function:
     Runtime: python3.12
     Timeout: 10
     MemorySize: 256
     Layers:
-      - !Ref CommonLayer
+      - !Ref CommonLayer       # Todas las Lambdas heredan la capa
 
+###############################################################################
+# API HTTP
+###############################################################################
 Resources:
 
-  MyHttpApi:
+  HttpApi:
     Type: AWS::Serverless::HttpApi
     Properties:
       StageName: Prod
@@ -20,117 +26,47 @@ Resources:
         AllowMethods: [POST]
         AllowHeaders: [Content-Type, Authorization]
 
+###############################################################################
+# LAYER con código compartido
+###############################################################################
   CommonLayer:
     Type: AWS::Serverless::LayerVersion
     Properties:
-      LayerName: crm-common-layer
-      ContentUri: layer/
+      LayerName: demo-common-layer
+      ContentUri: layer/          # debe contener requirements.txt y python/
       CompatibleRuntimes: [python3.12]
-      RetentionPolicy: Retain
     Metadata:
-      BuildMethod: python3.12
+      BuildMethod: python3.12     # SAM instalará requirements.txt en la layer
 
-  # POST /login
-  PublicLoginFunction:
+###############################################################################
+# FUNCIÓN /login (POST)
+###############################################################################
+  LoginFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: src/handlers_public
-      Handler: login_post.lambda_handler
+      CodeUri: src/handlers_public        # solo el handler
+      Handler: login_post.lambda_handler  # login_post.py en esa carpeta
       Layers:
-        - !Ref CommonLayer
+        - !Ref CommonLayer               # referencia explícita (redundante pero segura)
+      Environment:
+        Variables:
+          JWT_SECRET: "dev_secret"
+          JWT_ALGORITHM: "HS256"
       Events:
         HttpApiLogin:
           Type: HttpApi
           Properties:
-            ApiId: !Ref MyHttpApi
+            ApiId: !Ref HttpApi
             Path: /login
             Method: POST
-      Environment:
-        Variables:
-          MONGODB_URI: "mongodb://host.docker.internal:27017"
-          MONGODB_DB_NAME: "db_demo"
-          JWT_SECRET: "46ae6e4f0vatkjkj0hfsm15sqt"
-          JWT_ALGORITHM: "HS256"
 
-  # POST /forgot-password
-  PublicForgotPasswordFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: src/handlers_public
-      Handler: forgot_password_post.lambda_handler
-      Layers:
-        - !Ref CommonLayer
-      Events:
-        HttpApiForgotPassword:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref MyHttpApi
-            Path: /forgot-password
-            Method: POST
-      Environment:
-        Variables:
-          MONGODB_URI: "mongodb://host.docker.internal:27017"
-          MONGODB_DB_NAME: "db_demo"
-          JWT_SECRET: "46ae6e4f0vatkjkj0hfsm15sqt"
-          JWT_ALGORITHM: "HS256"
-
-  # POST /refresh-token
-  PublicRefreshTokenFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: src/handlers_public
-      Handler: refresh_token_post.lambda_handler
-      Layers:
-        - !Ref CommonLayer
-      Events:
-        HttpApiRefreshToken:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref MyHttpApi
-            Path: /refresh-token
-            Method: POST
-      Environment:
-        Variables:
-          MONGODB_URI: "mongodb://host.docker.internal:27017"
-          MONGODB_DB_NAME: "db_demo"
-          JWT_SECRET: "46ae6e4f0vatkjkj0hfsm15sqt"
-          JWT_ALGORITHM: "HS256"
-
-  # POST /validate-token
-  PublicValidateTokenFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: src/handlers_public
-      Handler: validate_token_post.lambda_handler
-      Layers:
-        - !Ref CommonLayer
-      Events:
-        HttpApiValidateToken:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref MyHttpApi
-            Path: /validate-token
-            Method: POST
-      Environment:
-        Variables:
-          MONGODB_URI: "mongodb://host.docker.internal:27017"
-          MONGODB_DB_NAME: "db_demo"
-          JWT_SECRET: "46ae6e4f0vatkjkj0hfsm15sqt"
-          JWT_ALGORITHM: "HS256"
-
+###############################################################################
+# OUTPUTS
+###############################################################################
 Outputs:
   ApiBaseUrl:
-    Description: "URL base de la API"
-    Value: !Sub "https://${MyHttpApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
-  PublicLoginUrl:
-    Description: "Endpoint público de login"
-    Value: !Sub "https://${MyHttpApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/login"
-  PublicForgotPasswordUrl:
-    Description: "Endpoint público de recuperación de contraseña"
-    Value: !Sub "https://${MyHttpApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/forgot-password"
-  PublicRefreshTokenUrl:
-    Description: "Endpoint público de refresh token"
-    Value: !Sub "https://${MyHttpApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/refresh-token"
-  PublicValidateTokenUrl:
-    Description: "Endpoint público de validación de token"
-    Value: !Sub "https://${MyHttpApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/validate-token"
+    Description: "URL base del API local/AWS"
+    Value: !Sub "https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+  LoginUrl:
+    Description: "Endpoint de login"
+    Value: !Sub "https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/login"
