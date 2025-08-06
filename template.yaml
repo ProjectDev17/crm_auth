@@ -1,20 +1,14 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 
-###############################################################################
-# 1. GLOBALS
-###############################################################################
 Globals:
   Function:
-    Runtime: python3.13          # ← 3.13 aún no está soportado
+    Runtime: python3.12
     Timeout: 10
     MemorySize: 256
     Layers:
-      - !Ref CommonLayer         # Todas las Lambdas heredan la capa
+      - !Ref CommonLayer
 
-###############################################################################
-# 2. API HTTP
-###############################################################################
 Resources:
 
   MyHttpApi:
@@ -23,115 +17,113 @@ Resources:
       StageName: Prod
       CorsConfiguration:
         AllowOrigins: ["*"]
-        AllowMethods: [GET, POST, PUT]
+        AllowMethods: [POST]
         AllowHeaders: [Content-Type, Authorization]
 
-###############################################################################
-# 3. COMMON LAYER
-###############################################################################
   CommonLayer:
     Type: AWS::Serverless::LayerVersion
     Properties:
       LayerName: crm-common-layer
-      ContentUri: layer/          # carpeta con utils/, services/, requirements.txt
+      ContentUri: layer/
       CompatibleRuntimes: [python3.12]
       RetentionPolicy: Retain
+    Metadata:
+      BuildMethod: python3.12
 
-###############################################################################
-# 4. LOGIN (público) – POST /auth
-###############################################################################
-  LoginFunction:
+
+  # POST /login
+  PublicLoginFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: src/handlers_public
-      Handler: handle_post.lambda_handler
+      Handler: login_post.lambda_handler
       Events:
         HttpApiLogin:
           Type: HttpApi
           Properties:
             ApiId: !Ref MyHttpApi
-            Path: /auth
+            Path: /login
             Method: POST
       Environment:
         Variables:
-          # En producción usa SSM o Secrets Manager
           MONGODB_URI: "mongodb://host.docker.internal:27017"
           MONGODB_DB_NAME: "db_demo"
           JWT_SECRET: "46ae6e4f0vatkjkj0hfsm15sqt"
           JWT_ALGORITHM: "HS256"
 
-###############################################################################
-# 5. LAMBDA AUTHORIZER (Custom)
-###############################################################################
-  LambdaAuthorizer:
+  # POST /forgot-password
+  PublicForgotPasswordFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: src/middleware
-      Handler: auth_middleware.lambda_handler
-      # Si quieres aislarla de la capa global, elimínala de Globals.Function
-      Layers: [!Ref CommonLayer]
-
-###############################################################################
-# 6. CRUD FUNCTIONS (protegidas)
-###############################################################################
-  TemplatesFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: src/handlers            # ajusta al path real
-      Handler: handle_get.lambda_handler
+      CodeUri: src/handlers_public
+      Handler: forgot_password_post.lambda_handler
+      Events:
+        HttpApiForgotPassword:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref MyHttpApi
+            Path: /forgot-password
+            Method: POST
       Environment:
         Variables:
-          MONGODB_DB_NAME: "db_demo"
           MONGODB_URI: "mongodb://host.docker.internal:27017"
-      Events:
-        GetAll:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref MyHttpApi
-            Path: /                       # GET /
-            Method: GET
-            Auth:
-              Authorizer: Lambda          # Usa el authorizer
-              AuthorizerPayloadFormatVersion: 2.0
-              AuthorizerArn: !GetAtt LambdaAuthorizer.Arn
-        GetById:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref MyHttpApi
-            Path: /{id}                   # GET /{id}
-            Method: GET
-            Auth:
-              Authorizer: Lambda
-              AuthorizerPayloadFormatVersion: 2.0
-              AuthorizerArn: !GetAtt LambdaAuthorizer.Arn
-        UpdateById:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref MyHttpApi
-            Path: /{id}                   # PUT /{id}
-            Method: PUT
-            Auth:
-              Authorizer: Lambda
-              AuthorizerPayloadFormatVersion: 2.0
-              AuthorizerArn: !GetAtt LambdaAuthorizer.Arn
-        CreateItem:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref MyHttpApi
-            Path: /                       # POST /
-            Method: POST
-            Auth:
-              Authorizer: Lambda
-              AuthorizerPayloadFormatVersion: 2.0
-              AuthorizerArn: !GetAtt LambdaAuthorizer.Arn
+          MONGODB_DB_NAME: "db_demo"
+          JWT_SECRET: "46ae6e4f0vatkjkj0hfsm15sqt"
+          JWT_ALGORITHM: "HS256"
 
-###############################################################################
-# 7. OUTPUTS
-###############################################################################
+  # POST /refresh-token
+  PublicRefreshTokenFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/handlers_public
+      Handler: refresh_token_post.lambda_handler
+      Events:
+        HttpApiRefreshToken:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref MyHttpApi
+            Path: /refresh-token
+            Method: POST
+      Environment:
+        Variables:
+          MONGODB_URI: "mongodb://host.docker.internal:27017"
+          MONGODB_DB_NAME: "db_demo"
+          JWT_SECRET: "46ae6e4f0vatkjkj0hfsm15sqt"
+          JWT_ALGORITHM: "HS256"
+
+  # POST /validate-token
+  PublicValidateTokenFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/handlers_public
+      Handler: validate_token_post.lambda_handler
+      Events:
+        HttpApiValidateToken:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref MyHttpApi
+            Path: /validate-token
+            Method: POST
+      Environment:
+        Variables:
+          MONGODB_URI: "mongodb://host.docker.internal:27017"
+          MONGODB_DB_NAME: "db_demo"
+          JWT_SECRET: "46ae6e4f0vatkjkj0hfsm15sqt"
+          JWT_ALGORITHM: "HS256"
+
 Outputs:
   ApiBaseUrl:
     Description: "URL base de la API"
     Value: !Sub "https://${MyHttpApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
-  LoginUrl:
+  PublicLoginUrl:
     Description: "Endpoint público de login"
     Value: !Sub "https://${MyHttpApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/login"
+  PublicForgotPasswordUrl:
+    Description: "Endpoint público de recuperación de contraseña"
+    Value: !Sub "https://${MyHttpApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/forgot-password"
+  PublicRefreshTokenUrl:
+    Description: "Endpoint público de refresh token"
+    Value: !Sub "https://${MyHttpApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/refresh-token"
+  PublicValidateTokenUrl:
+    Description: "Endpoint público de validación de token"
+    Value: !Sub "https://${MyHttpApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/validate-token"

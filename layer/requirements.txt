@@ -1,7 +1,7 @@
-# layer/requirements.txt
 pymongo[srv]==4.13.2     
 certifi==2025.8.3
 PyJWT==2.10.1
 python-dotenv==1.1.1
 cryptography==45.0.6
 uuid6==2025.0.1
+bcrypt==4.1.3

@@ -1,83 +1,53 @@
-# app.py
-
 import os
 import json
 
+# Handlers públicos
+from src.handlers_public.login_post import lambda_handler as login_handler
+from src.handlers_public.forgot_password_post import lambda_handler as forgot_password_handler
+from src.handlers_public.refresh_token_post import lambda_handler as refresh_token_handler
 
-
-# 2) Importa tus sub‐handlers
-from src.handlers.handle_get    import lambda_handler as get_handler
-from src.handlers.handle_post   import lambda_handler as post_handler
-from src.handlers.handle_put    import lambda_handler as put_handler
-from src.handlers.handle_delete import lambda_handler as delete_handler
-
-from src.handlers_pubilc.handle_post import lambda_handler as public_post_handler
 
 def lambda_handler(event, context):
-    """
-    2) Obtiene MONGODB_DB_NAME de entorno (ya definido en template.yaml).
-    3) Inyecta db_name en event y despacha según HTTP method.
-    """
-    # 1. Leer la variable de entorno (definida en template.yaml)
     db_name = os.getenv("MONGODB_DB_NAME")
     if not db_name:
-        return {
-            "statusCode": 500,
-            "body": json.dumps({
-                "error": "No se encontró la variable de entorno MONGODB_DB_NAME"
-            })
-        }
+        return _response(500, {"error": "No se encontró la variable de entorno MONGODB_DB_NAME"})
 
-    # 2. Inyectar db_name en event para que los sub‐handlers puedan usarla
     event["db_name"] = db_name
 
-    # 3. Detectar método HTTP (REST API v1 vs HTTP API v2)
-    method = event.get("httpMethod")
-    path = event.get("path") \
-        or event.get("rawPath") \
-        or event.get("requestContext", {}).get("http", {}).get("path", "")
-
-    if method is None:
-        method = event.get("requestContext", {}) \
-                      .get("http", {}) \
-                      .get("method", "")
-    method = method.upper()
+    method = _get_http_method(event)
+    path = _get_path(event)
 
     try:
         print(f"Processing {method} request for {path}")
-        #si el path contiene /public, usa el handler público
-        if "/public" in path:
+
+        # --- Rutas públicas ---
+        if path.startswith("/public"):
             if method == "POST":
-                return public_post_handler(event, context)
-            else:
-                return {
-                    "statusCode": 405,
-                    "body": json.dumps({
-                        "error": f"Método {method} no soportado para la ruta {path}"
-                    })
-                }
-        if method == "GET":
-            return get_handler(event, context)
+                if path == "/public/login":
+                    return login_handler(event, context)
+                elif path == "/public/forgot-password":
+                    return forgot_password_handler(event, context)
+                elif path == "/public/refresh-token":
+                    return refresh_token_handler(event, context)
+            return _response(405, {"error": f"Método {method} no soportado para {path}"})
 
-        elif method == "POST":
-            return post_handler(event, context)
-
-        elif method == "PUT":
-            return put_handler(event, context)
-
-        elif method == "DELETE":
-            return delete_handler(event, context)
-
-        else:
-            return {
-                "statusCode": 405,
-                "body": json.dumps({
-                    "error": f"Método {method} no soportado para la ruta {path}"
-                })
-            }
+        return _response(405, {"error": f"Método {method} no soportado para {path}"})
 
     except Exception as e:
-        return {
-            "statusCode": 500,
-            "body": json.dumps({"error": str(e)})
-        }
+        return _response(500, {"error": str(e)})
+
+
+# Helpers
+def _get_http_method(event):
+    m = event.get("httpMethod") or event.get("requestContext", {}).get("http", {}).get("method", "")
+    return m.upper()
+
+def _get_path(event):
+    return event.get("path") or event.get("rawPath") or event.get("requestContext", {}).get("http", {}).get("path", "")
+
+def _response(status, body):
+    return {
+        "statusCode": status,
+        "headers": {"Content-Type": "application/json"},
+        "body": json.dumps(body)
+    }
