@@ -1,12 +1,20 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 
+###############################################################################
+# 1. GLOBALS
+###############################################################################
 Globals:
   Function:
+    Runtime: python3.13          # ← 3.13 aún no está soportado
     Timeout: 10
-    Runtime: python3.13
     MemorySize: 256
+    Layers:
+      - !Ref CommonLayer         # Todas las Lambdas heredan la capa
 
+###############################################################################
+# 2. API HTTP
+###############################################################################
 Resources:
 
   MyHttpApi:
@@ -14,76 +22,116 @@ Resources:
     Properties:
       StageName: Prod
       CorsConfiguration:
-        AllowOrigins:
-          - "*"
-        AllowMethods:
-          - GET
-          - POST
-          - PUT
-          - DELETE
-        AllowHeaders:
-          - Content-Type
-          - Authorization
+        AllowOrigins: ["*"]
+        AllowMethods: [GET, POST, PUT]
+        AllowHeaders: [Content-Type, Authorization]
 
-  TemplatesFunction:
+###############################################################################
+# 3. COMMON LAYER
+###############################################################################
+  CommonLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: crm-common-layer
+      ContentUri: layer/          # carpeta con utils/, services/, requirements.txt
+      CompatibleRuntimes: [python3.12]
+      RetentionPolicy: Retain
+
+###############################################################################
+# 4. LOGIN (público) – POST /auth
+###############################################################################
+  LoginFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: .
-      Handler: app.lambda_handler
-
+      CodeUri: src/handlers_public
+      Handler: handle_post.lambda_handler
+      Events:
+        HttpApiLogin:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref MyHttpApi
+            Path: /auth
+            Method: POST
       Environment:
         Variables:
+          # En producción usa SSM o Secrets Manager
+          MONGODB_URI: "mongodb://host.docker.internal:27017"
           MONGODB_DB_NAME: "db_demo"
           JWT_SECRET: "46ae6e4f0vatkjkj0hfsm15sqt"
           JWT_ALGORITHM: "HS256"
-          MONGODB_URI: "mongodb+srv://db_vinks_integrations:KLJP9B6lfonqeu9O@cluster-vinks-red.lntwg7s.mongodb.net/dbname?retryWrites=true&w=majority&tls=true"
+
+###############################################################################
+# 5. LAMBDA AUTHORIZER (Custom)
+###############################################################################
+  LambdaAuthorizer:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/middleware
+      Handler: auth_middleware.lambda_handler
+      # Si quieres aislarla de la capa global, elimínala de Globals.Function
+      Layers: [!Ref CommonLayer]
+
+###############################################################################
+# 6. CRUD FUNCTIONS (protegidas)
+###############################################################################
+  TemplatesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/handlers            # ajusta al path real
+      Handler: handle_get.lambda_handler
+      Environment:
+        Variables:
+          MONGODB_DB_NAME: "db_demo"
+          MONGODB_URI: "mongodb://host.docker.internal:27017"
       Events:
-        GetAuth:
+        GetAll:
           Type: HttpApi
           Properties:
             ApiId: !Ref MyHttpApi
-            Path: /
+            Path: /                       # GET /
             Method: GET
-        GetAuthById:
+            Auth:
+              Authorizer: Lambda          # Usa el authorizer
+              AuthorizerPayloadFormatVersion: 2.0
+              AuthorizerArn: !GetAtt LambdaAuthorizer.Arn
+        GetById:
           Type: HttpApi
           Properties:
             ApiId: !Ref MyHttpApi
-            Path: /{id}
+            Path: /{id}                   # GET /{id}
             Method: GET
-        CreateAuth:
+            Auth:
+              Authorizer: Lambda
+              AuthorizerPayloadFormatVersion: 2.0
+              AuthorizerArn: !GetAtt LambdaAuthorizer.Arn
+        UpdateById:
           Type: HttpApi
           Properties:
             ApiId: !Ref MyHttpApi
-            Path: /
-            Method: POST
-        UpdateAuth:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref MyHttpApi
-            Path: /{id}
+            Path: /{id}                   # PUT /{id}
             Method: PUT
-        DeleteAuth:
+            Auth:
+              Authorizer: Lambda
+              AuthorizerPayloadFormatVersion: 2.0
+              AuthorizerArn: !GetAtt LambdaAuthorizer.Arn
+        CreateItem:
           Type: HttpApi
           Properties:
             ApiId: !Ref MyHttpApi
-            Path: /{id}
-            Method: DELETE
-        # Public Create Auth
-        PublicCreateAuth:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref MyHttpApi
-            Path: /public
+            Path: /                       # POST /
             Method: POST
+            Auth:
+              Authorizer: Lambda
+              AuthorizerPayloadFormatVersion: 2.0
+              AuthorizerArn: !GetAtt LambdaAuthorizer.Arn
 
-
-
+###############################################################################
+# 7. OUTPUTS
+###############################################################################
 Outputs:
-  # URL para invocar el endpoint GET /auth
-  TemplatesApiUrl:
-    Description: "Invoke URL para el recurso /auth"
-    Value: !Sub
-      - "https://${ApiId}.execute-api.${Region}.amazonaws.com/${StageName}/auth"
-      - ApiId: !Ref MyHttpApi
-        Region: !Ref AWS::Region
-        StageName: Prod
+  ApiBaseUrl:
+    Description: "URL base de la API"
+    Value: !Sub "https://${MyHttpApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+  LoginUrl:
+    Description: "Endpoint público de login"
+    Value: !Sub "https://${MyHttpApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/login"
