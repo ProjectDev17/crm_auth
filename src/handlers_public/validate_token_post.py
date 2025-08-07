@@ -1,3 +1,6 @@
+import sys
+sys.path.append('/opt')
+
 import os
 import json
 import jwt

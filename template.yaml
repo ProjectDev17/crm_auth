@@ -32,7 +32,6 @@ Resources:
   CommonLayer:
     Type: AWS::Serverless::LayerVersion
     Properties:
-      LayerName: demo-common-layer
       ContentUri: layer/          # debe contener requirements.txt y python/
       CompatibleRuntimes: [python3.12]
     Metadata:
@@ -44,8 +43,8 @@ Resources:
   LoginFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: src/handlers_public        # solo el handler
-      Handler: login_post.lambda_handler  # login_post.py en esa carpeta
+      CodeUri: src/
+      Handler: app.lambda_handler
       Layers:
         - !Ref CommonLayer               # referencia explícita (redundante pero segura)
       Environment:

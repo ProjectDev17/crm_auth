@@ -1,11 +1,12 @@
+import sys; sys.path.append('/opt')  # <--- ¡Esta línea hace que la layer esté disponible en todo el proceso!
+
 import os
 import json
 
 # Handlers públicos
-from src.handlers_public.login_post import lambda_handler as login_handler
-from src.handlers_public.forgot_password_post import lambda_handler as forgot_password_handler
-from src.handlers_public.refresh_token_post import lambda_handler as refresh_token_handler
-
+from handlers_public.login_post import lambda_handler as login_handler
+from handlers_public.forgot_password_post import lambda_handler as forgot_password_handler
+from handlers_public.refresh_token_post import lambda_handler as refresh_token_handler
 
 def lambda_handler(event, context):
     db_name = os.getenv("MONGODB_DB_NAME")
@@ -35,7 +36,6 @@ def lambda_handler(event, context):
 
     except Exception as e:
         return _response(500, {"error": str(e)})
-
 
 # Helpers
 def _get_http_method(event):

@@ -1,4 +1,4 @@
-# src/services/db.py
+# python/services/db.py
 
 from pymongo import MongoClient, errors
 import os
