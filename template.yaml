@@ -11,6 +11,13 @@ Globals:
     MemorySize: 256
     Layers:
       - !Ref CommonLayer       # Todas las Lambdas heredan la capa
+    Environment:
+      Variables:
+        # Variables disponibles en todas las Lambdas
+        JWT_SECRET: "dev_secret"
+        JWT_ALGORITHM: "HS256"
+        MONGODB_DB_NAME: "crm"
+        MONGODB_URI: "mongodb://host.docker.internal:27017"
 
 ###############################################################################
 # API HTTP
@@ -38,7 +45,7 @@ Resources:
       BuildMethod: python3.12     # SAM instalará requirements.txt en la layer
 
 ###############################################################################
-# FUNCIÓN /login (POST)
+# FUNCIÓN PRINCIPAL (APP)
 ###############################################################################
   LoginFunction:
     Type: AWS::Serverless::Function
@@ -46,17 +53,25 @@ Resources:
       CodeUri: src/
       Handler: app.lambda_handler
       Layers:
-        - !Ref CommonLayer               # referencia explícita (redundante pero segura)
-      Environment:
-        Variables:
-          JWT_SECRET: "dev_secret"
-          JWT_ALGORITHM: "HS256"
+        - !Ref CommonLayer
       Events:
         HttpApiLogin:
           Type: HttpApi
           Properties:
             ApiId: !Ref HttpApi
             Path: /login
+            Method: POST
+        HttpApiForgotPassword:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /forgot-password
+            Method: POST
+        HttpApiRefreshToken:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /refresh-token
             Method: POST
 
 ###############################################################################
@@ -69,3 +84,9 @@ Outputs:
   LoginUrl:
     Description: "Endpoint de login"
     Value: !Sub "https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/login"
+  ForgotPasswordUrl:
+    Description: "Endpoint de forgot-password"
+    Value: !Sub "https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/forgot-password"
+  RefreshTokenUrl:
+    Description: "Endpoint de refresh-token"
+    Value: !Sub "https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/refresh-token"

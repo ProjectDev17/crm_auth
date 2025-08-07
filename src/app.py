@@ -20,18 +20,13 @@ def lambda_handler(event, context):
 
     try:
         print(f"Processing {method} request for {path}")
-
-        # --- Rutas públicas ---
-        if path.startswith("/public"):
-            if method == "POST":
-                if path == "/public/login":
-                    return login_handler(event, context)
-                elif path == "/public/forgot-password":
-                    return forgot_password_handler(event, context)
-                elif path == "/public/refresh-token":
-                    return refresh_token_handler(event, context)
-            return _response(405, {"error": f"Método {method} no soportado para {path}"})
-
+        if method == "POST":
+            if path == "/login":
+                return login_handler(event, context)
+            elif path == "/forgot-password":
+                return forgot_password_handler(event, context)
+            elif path == "/refresh-token":
+                return refresh_token_handler(event, context)
         return _response(405, {"error": f"Método {method} no soportado para {path}"})
 
     except Exception as e:
