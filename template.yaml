@@ -91,6 +91,18 @@ Resources:
             ApiId: !Ref HttpApi
             Path: /logout
             Method: POST
+        HttpApiSendValidationEmail:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /send-validation-email
+            Method: POST
+        HttpApiValidateEmail:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /validate-email
+            Method: POST
 
 ###############################################################################
 # OUTPUTS

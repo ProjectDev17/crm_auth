@@ -9,6 +9,8 @@ from handlers_public.forgot_password_post import lambda_handler as forgot_passwo
 from handlers_public.refresh_token_post import lambda_handler as refresh_token_handler
 from handlers_public.register_post import lambda_handler as register_handler
 from handlers_public.validate_token_post import lambda_handler as validate_token_handler
+from handlers_public.send_validation_email_post import lambda_handler as send_validation_email_handler
+from handlers_public.validate_email_post import lambda_handler as validate_email_handler
 
 def lambda_handler(event, context):
     db_name = os.getenv("MONGODB_DB_NAME")
@@ -35,6 +37,10 @@ def lambda_handler(event, context):
                 return validate_token_handler(event, context)
             elif path == "/logout":
                 return logout_handler(event, context)
+            elif path == "/send-validation-email":
+                return send_validation_email_handler(event, context)
+            elif path == "/validate-email":
+                return validate_email_handler(event, context)
         return _response(405, {"error": f"Método {method} no soportado para {path}"})
 
     except Exception as e:
