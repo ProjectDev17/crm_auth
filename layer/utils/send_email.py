@@ -10,7 +10,7 @@ def send_validation_email(email, token):
     validation_link = f"{FRONTEND_URL}/validate-email?token={token}"
 
     gmail_user = "developerdaniel733@gmail.com" #os.getenv("GMAIL_USER")  # Tu email de Gmail
-    gmail_pass = "heald_jqGtPvd9NZ7mjJlHDRFno60QO2Dtp7Vq0" #os.getenv("GMAIL_PASS")  # Tu contraseña o App Password
+    gmail_pass = "djrmprxaufdkatim" #os.getenv("GMAIL_PASS")  # Tu contraseña o App Password
 
     if not gmail_user or not gmail_pass:
         print("Faltan las variables de entorno GMAIL_USER o GMAIL_PASS")
