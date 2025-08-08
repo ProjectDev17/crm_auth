@@ -16,7 +16,7 @@ Globals:
         # Variables disponibles en todas las Lambdas
         JWT_SECRET: "dev_secret"
         JWT_ALGORITHM: "HS256"
-        MONGODB_DB_NAME: "crm"
+        MONGODB_DB_NAME: "demo"
         MONGODB_URI: "mongodb://host.docker.internal:27017"
 
 ###############################################################################
@@ -72,6 +72,24 @@ Resources:
           Properties:
             ApiId: !Ref HttpApi
             Path: /refresh-token
+            Method: POST
+        HttpApiRegister:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /register
+            Method: POST
+        HttpApiValidateToken:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /validate-token
+            Method: POST
+        HttpApiLogout:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /logout
             Method: POST
 
 ###############################################################################

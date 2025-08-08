@@ -7,6 +7,8 @@ import json
 from handlers_public.login_post import lambda_handler as login_handler
 from handlers_public.forgot_password_post import lambda_handler as forgot_password_handler
 from handlers_public.refresh_token_post import lambda_handler as refresh_token_handler
+from handlers_public.register_post import lambda_handler as register_handler
+from handlers_public.validate_token_post import lambda_handler as validate_token_handler
 
 def lambda_handler(event, context):
     db_name = os.getenv("MONGODB_DB_NAME")
@@ -27,6 +29,12 @@ def lambda_handler(event, context):
                 return forgot_password_handler(event, context)
             elif path == "/refresh-token":
                 return refresh_token_handler(event, context)
+            elif path == "/register":
+                return register_handler(event, context)
+            elif path == "/validate-token":
+                return validate_token_handler(event, context)
+            elif path == "/logout":
+                return logout_handler(event, context)
         return _response(405, {"error": f"Método {method} no soportado para {path}"})
 
     except Exception as e:
