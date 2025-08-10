@@ -9,6 +9,7 @@ from utils.jwt_token import generate_jwt, generate_jwt_refresh, decode_jwt  # Us
 from utils.send_email import send_email
 import uuid
 from utils.timestamp import add_hours_to_timestamp, now_ts
+from services.db import get_database
 
 def _get_user_collection(db_name):
     client = get_mongo_client()
@@ -58,19 +59,21 @@ def authenticate(email: str, password: str, db_name: str) -> Optional[Dict]:
     }
 
 def send_password_reset(email: str, db_name: str) -> bool:
-    user = _get_user_collection(db_name).find_one({"email": email, "status": True})
+    db = get_database(db_name)
+    users = db["users"]
+    user = users.find_one({"email": email, "status": True})
     if not user:
         return False
     
     new_token = str(uuid.uuid4())
-        user.update_one(
-            {"email": email},
-            {"$set": {
-                "validation_token": new_token,
-                "validation_token_expires": add_hours_to_timestamp(1),  # 1h
-                "validation_token_sent_at": now_ts()
-            }}
-        )
+    users.update_one(
+        {"email": email},
+        {"$set": {
+            "validation_token": new_token,
+            "validation_token_expires": add_hours_to_timestamp(1),  # 1h
+            "validation_token_sent_at": now_ts()
+        }}
+    )
 
     body = f"Haz clic en el siguiente enlace para restablecer tu contraseña: https://digitalcrm.net/reset-password?token={new_token}"
 
