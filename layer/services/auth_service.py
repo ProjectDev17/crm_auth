@@ -5,7 +5,7 @@ import time
 from typing import Optional, Dict
 from services.db import get_mongo_client
 from utils.hash_password import verify_password  # Usa tu función de la layer
-from utils.jwt_token import generate_jwt, generate_jwt_refresh  # Usa tu función de la layer
+from utils.jwt_token import generate_jwt, generate_jwt_refresh, decode_jwt  # Usa tu función de la layer
 
 def _get_user_collection(db_name):
     client = get_mongo_client()
@@ -46,23 +46,28 @@ def authenticate(email: str, password: str, db_name: str) -> Optional[Dict]:
         }
     }
 
-
 def send_password_reset(email: str, db_name: str) -> bool:
     # Simulación: busca el usuario y "envía" un correo de recuperación
     user = _get_user_collection(db_name).find_one({"email": email, "status": True})
     if not user:
         return False
-    # Aquí iría la lógica para enviar el correo (SMTP, SES, etc.)
+    
     print(f"Enviando email de recuperación a {email}")
     return True
 
-# Agrega esto en python/services/auth_service.py
-
 def refresh_access_token(refresh_token: str):
-    if refresh_token != "fake-refresh-token":
+    if refresh_token == "":
         return None
-    access_token = generate_jwt("dummy_user_id", "test@example.com")
+    decoded = decode_jwt(refresh_token)
+    if not decoded:
+        return None
+    access_token = generate_jwt(decoded["user_id"], decoded["email"])
+    refresh_token = generate_jwt_refresh(decoded["user_id"], decoded["email"])
     return {
         "access_token": access_token,
-        "user": {"_id": "dummy_user_id", "email": "test@example.com"}
+        "refresh_token": refresh_token,
+        "user": {
+            "_id": decoded["user_id"],
+            "email": decoded["email"]
+        }
     }

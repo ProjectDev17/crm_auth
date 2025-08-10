@@ -24,3 +24,12 @@ def generate_jwt_refresh(user_id: str, email: str) -> str:
         "exp": add_seconds_to_timestamp(JWT_EXP_SECS, issued_at),   # ✅ tu helper recibe 2 args
     }
     return jwt.encode(payload, JWT_SECRET, algorithm="HS256")
+
+def decode_jwt(token: str) -> dict | None:
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+        return payload
+    except jwt.ExpiredSignatureError:
+        return None
+    except jwt.InvalidTokenError:
+        return None
