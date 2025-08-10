@@ -5,19 +5,17 @@ import jwt
 import time
 from typing import Optional, Dict
 from services.db import get_mongo_client
+from utils.hash_password import verify_password  # Usa tu función de la layer
 
 JWT_SECRET = os.getenv("JWT_SECRET", "dev_secret")     # usa Secrets Manager
 JWT_EXP_SECS = int(os.getenv("JWT_EXP_SECS", "3600"))  # 1 h por defecto
 
 def _get_user_collection():
     client = get_mongo_client()
-    return client["crm"]["users"]
+    return client["demo"]["users"]
 
 def hash_password(plain: str) -> bytes:
     return bcrypt.hashpw(plain.encode(), bcrypt.gensalt())
-
-def verify_password(plain: str, hashed: bytes) -> bool:
-    return bcrypt.checkpw(plain.encode(), hashed)
 
 def generate_jwt(user_id: str, email: str) -> str:
     payload = {
@@ -29,18 +27,37 @@ def generate_jwt(user_id: str, email: str) -> str:
     return jwt.encode(payload, JWT_SECRET, algorithm="HS256")
 
 def authenticate(email: str, password: str) -> Optional[Dict]:
-    """Devuelve dict con usuario + tokens o None."""
+    """
+    Devuelve dict con usuario + tokens o None si la autenticación falla.
+    """
     user = _get_user_collection().find_one({"email": email, "status": True})
-    if not user or not verify_password(password, user["password"]):
+    if not user:
         return None
-    # Genera access_token y refresh_token aquí si lo usas
+
+    hashed_password = user.get("password")
+    if not hashed_password:
+        return None
+
+    # Asegura que hashed_password sea bytes antes de verificar
+    if isinstance(hashed_password, str):
+        hashed_password = hashed_password.encode("utf-8")
+
+    if not verify_password(password, hashed_password.decode("utf-8")):
+        return None
+
+    # Genera access_token y refresh_token
     access_token = generate_jwt(str(user["_id"]), email)
-    refresh_token = "fake-refresh-token"  # Pon aquí tu lógica real si tienes refresh tokens
+    refresh_token = "fake-refresh-token"  # Aquí pones la lógica real
+
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
-        "user": {"_id": str(user['_id']), "email": email}
+        "user": {
+            "_id": str(user['_id']),
+            "email": email
+        }
     }
+
 
 def send_password_reset(email: str) -> bool:
     # Simulación: busca el usuario y "envía" un correo de recuperación

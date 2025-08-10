@@ -1,6 +1,7 @@
 import json
 from services.db import get_database
 from utils.hash_password import hash_password  # Usa tu función de la layer
+from utils.crud import build_new_item
 
 def lambda_handler(event, context):
     db_name = event["db_name"]
@@ -22,13 +23,18 @@ def lambda_handler(event, context):
             return _response(409, {"error": "El usuario o email ya existe"})
 
         # Crear usuario
-        user = {
+        body = {
             "email": email,
             "username": username,
             "password": hash_password(password),  # Ahora usando bcrypt
             "full_name": full_name,
             "status": True
         }
+        
+        user = build_new_item(
+            body=body,
+            created_by_user=username
+        )
         result = collection.insert_one(user)
         return _response(201, {"message": "Usuario creado correctamente", "user_id": str(result.inserted_id)})
     except Exception as e:

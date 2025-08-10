@@ -9,8 +9,10 @@ def hash_password(password: str) -> str:
     hashed = bcrypt.hashpw(password.encode("utf-8"), salt)
     return hashed.decode("utf-8")
 
-def verify_password(password: str, hashed: str) -> bool:
+def verify_password(password: str, hashed: str | bytes) -> bool:
     """
     Verifica si una contraseña en texto plano coincide con un hash bcrypt.
     """
-    return bcrypt.checkpw(password.encode("utf-8"), hashed.encode("utf-8"))
+    if isinstance(hashed, str):
+        hashed = hashed.encode("utf-8")
+    return bcrypt.checkpw(password.encode("utf-8"), hashed)
