@@ -36,6 +36,14 @@ def authenticate(email: str, password: str, db_name: str) -> Optional[Dict]:
     # Genera access_token y refresh_token
     access_token = generate_jwt(str(user["_id"]), email)
     refresh_token = generate_jwt_refresh(str(user["_id"]), email)
+    
+    #Guarda en la base de datos el access_token y refresh_token
+    _get_user_collection(db_name).update_one({"_id": user["_id"]}, {
+        "$set": {
+            "access_token": access_token,
+            "refresh_token": refresh_token
+        }
+    })
 
     return {
         "access_token": access_token,
