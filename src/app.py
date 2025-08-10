@@ -11,6 +11,7 @@ from handlers_public.register_post import lambda_handler as register_handler
 from handlers_public.validate_token_post import lambda_handler as validate_token_handler
 from handlers_public.send_validation_email_post import lambda_handler as send_validation_email_handler
 from handlers_public.validate_email_post import lambda_handler as validate_email_handler
+from handlers_public.logout_post import lambda_handler as logout_handler
 
 def lambda_handler(event, context):
     db_name = os.getenv("MONGODB_DB_NAME")
