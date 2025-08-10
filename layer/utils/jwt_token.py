@@ -1,25 +1,26 @@
 import jwt
 import os
-from datetime import now_ts, add_hours_to_timestamp
+from utils.timestamp import now_ts, add_seconds_to_timestamp
 
 JWT_SECRET = os.getenv("JWT_SECRET", "dev_secret")     # usa Secrets Manager
 JWT_EXP_SECS = int(os.getenv("JWT_EXP_SECS", "3600"))  # 1 h por defecto
 
 def generate_jwt(user_id: str, email: str) -> str:
-    JWT_EXP_HOURS = JWT_EXP_SECS/3600
+    issued_at = now_ts()                          # ✅ llama la función
     payload = {
         "user_id": user_id,
         "email": email,
-        "iat": now_ts,
-        "exp": add_hours_to_timestamp(now_ts, JWT_EXP_HOURS),
+        "iat": issued_at,                        # ✅ int
+        "exp": issued_at + JWT_EXP_SECS,         # ✅ int + int
     }
     return jwt.encode(payload, JWT_SECRET, algorithm="HS256")
 
 def generate_jwt_refresh(user_id: str, email: str) -> str:
+    issued_at = now_ts()                          # ✅ llama la función
     payload = {
         "user_id": user_id,
         "email": email,
-        "iat": now_ts,
-        "exp": add_hours_to_timestamp(now_ts, 1),
+        "iat": issued_at,
+        "exp": add_seconds_to_timestamp(JWT_EXP_SECS, issued_at),   # ✅ tu helper recibe 2 args
     }
     return jwt.encode(payload, JWT_SECRET, algorithm="HS256")

@@ -5,7 +5,7 @@ import time
 from typing import Optional, Dict
 from services.db import get_mongo_client
 from utils.hash_password import verify_password  # Usa tu función de la layer
-from utils.jwt_token import generate_jwt  # Usa tu función de la layer
+from utils.jwt_token import generate_jwt, generate_jwt_refresh  # Usa tu función de la layer
 
 def _get_user_collection(db_name):
     client = get_mongo_client()
