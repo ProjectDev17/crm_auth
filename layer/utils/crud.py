@@ -3,7 +3,7 @@ import time
 from typing import Any, Dict, Tuple
 from uuid6 import uuid6
 from datetime import datetime
-from now_ts import timestamp
+from utils.timestamp import now_ts
 
 # Dependencia externa que ya tienes en tu proyecto
 # from your_layer.mongo import get_database
