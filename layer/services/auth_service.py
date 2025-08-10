@@ -6,6 +6,9 @@ from typing import Optional, Dict
 from services.db import get_mongo_client
 from utils.hash_password import verify_password  # Usa tu función de la layer
 from utils.jwt_token import generate_jwt, generate_jwt_refresh, decode_jwt  # Usa tu función de la layer
+from utils.send_email import send_email
+import uuid
+from utils.timestamp import add_hours_to_timestamp, now_ts
 
 def _get_user_collection(db_name):
     client = get_mongo_client()
@@ -55,12 +58,23 @@ def authenticate(email: str, password: str, db_name: str) -> Optional[Dict]:
     }
 
 def send_password_reset(email: str, db_name: str) -> bool:
-    # Simulación: busca el usuario y "envía" un correo de recuperación
     user = _get_user_collection(db_name).find_one({"email": email, "status": True})
     if not user:
         return False
     
-    print(f"Enviando email de recuperación a {email}")
+    new_token = str(uuid.uuid4())
+        user.update_one(
+            {"email": email},
+            {"$set": {
+                "validation_token": new_token,
+                "validation_token_expires": add_hours_to_timestamp(1),  # 1h
+                "validation_token_sent_at": now_ts()
+            }}
+        )
+
+    body = f"Haz clic en el siguiente enlace para restablecer tu contraseña: https://digitalcrm.net/reset-password?token={new_token}"
+
+    send_email(email, "Restablecer contraseña", body)
     return True
 
 def refresh_access_token(refresh_token: str):
