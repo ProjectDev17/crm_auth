@@ -16,8 +16,8 @@ Globals:
         # Variables disponibles en todas las Lambdas
         JWT_SECRET: "dev_secret"
         JWT_ALGORITHM: "HS256"
-        MONGODB_DB_NAME: "demo"
-        MONGODB_URI: "mongodb+srv://user-demo:sCEVRRjfDzUi8Ve7@crm.oeswogj.mongodb.net/demo?retryWrites=true&w=majority&tls=true"
+        MONGODB_DB_NAME: "crm"
+        MONGODB_URI: "mongodb+srv://crm:sCEVRRjfDzUi8Ve7@crm.oeswogj.mongodb.net/crm?retryWrites=true&w=majority&tls=true"
 
 ###############################################################################
 # API HTTP
