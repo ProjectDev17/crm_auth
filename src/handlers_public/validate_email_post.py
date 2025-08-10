@@ -1,5 +1,5 @@
 import json
-import datetime
+from utils.timestamp import now_ts
 from services.db import get_database
 
 def lambda_handler(event, context):
@@ -15,7 +15,7 @@ def lambda_handler(event, context):
 
         user = users.find_one({
             "validation_token": token,
-            "validation_token_expires": {"$gt": datetime.datetime.utcnow()}
+            "validation_token_expires": {"$gt": now_ts()}
         })
 
         if not user:

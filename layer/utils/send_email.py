@@ -6,7 +6,7 @@ def send_validation_email(email, token):
     """
     Envía el email de validación al usuario usando SMTP de Gmail.
     """
-    FRONTEND_URL = os.getenv("FRONTEND_URL", "https://tu-app.com")
+    FRONTEND_URL = os.getenv("FRONTEND_URL", "http://digitalcrm.net")
     validation_link = f"{FRONTEND_URL}/validate-email?token={token}"
 
     gmail_user = "developerdaniel733@gmail.com" #os.getenv("GMAIL_USER")  # Tu email de Gmail
