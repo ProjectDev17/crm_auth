@@ -28,7 +28,7 @@ def lambda_handler(event, context):
             "username": username,
             "password": hash_password(password),  # Ahora usando bcrypt
             "full_name": full_name,
-            "status": True
+            "email_verified": False
         }
         
         user = build_new_item(
