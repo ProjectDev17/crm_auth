@@ -3,6 +3,7 @@ sys.path.append('/opt')
 
 import json
 from services.auth_service import refresh_access_token
+from services.db import get_database
 
 def lambda_handler(event, context):
     
