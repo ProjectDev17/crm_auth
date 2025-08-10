@@ -3,6 +3,7 @@ import uuid
 import datetime
 from services.db import get_database
 from utils.send_email import send_validation_email
+from utils.timestamp import add_hours_to_timestamp
 
 def lambda_handler(event, context):
     db_name = event["db_name"]
@@ -22,14 +23,13 @@ def lambda_handler(event, context):
 
         # Generar token y fecha de expiración
         token = str(uuid.uuid4())
-        expires = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
 
         # Guardar el token temporal en el usuario
         users.update_one(
             {"email": email},
             {"$set": {
                 "validation_token": token,
-                "validation_token_expires": expires
+                "validation_token_expires": add_hours_to_timestamp(1) # 1 hora
             }}
         )
 

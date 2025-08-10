@@ -8,11 +8,12 @@ def lambda_handler(event, context):
     body = json.loads(event.get("body") or "{}")
     email = body.get("email")
     password = body.get("password")
+    db_name = event["db_name"]
 
     if not email or not password:
         return _res(400, {"message": "Email y password son requeridos"})
 
-    auth_data = authenticate(email, password)
+    auth_data = authenticate(email, password, db_name)
     if not auth_data:
         return _res(401, {"message": "Credenciales inválidas"})
 

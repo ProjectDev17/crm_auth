@@ -10,9 +10,9 @@ from utils.hash_password import verify_password  # Usa tu función de la layer
 JWT_SECRET = os.getenv("JWT_SECRET", "dev_secret")     # usa Secrets Manager
 JWT_EXP_SECS = int(os.getenv("JWT_EXP_SECS", "3600"))  # 1 h por defecto
 
-def _get_user_collection():
+def _get_user_collection(db_name):
     client = get_mongo_client()
-    return client["demo"]["users"]
+    return client[db_name]["users"]
 
 def hash_password(plain: str) -> bytes:
     return bcrypt.hashpw(plain.encode(), bcrypt.gensalt())
@@ -26,11 +26,11 @@ def generate_jwt(user_id: str, email: str) -> str:
     }
     return jwt.encode(payload, JWT_SECRET, algorithm="HS256")
 
-def authenticate(email: str, password: str) -> Optional[Dict]:
+def authenticate(email: str, password: str, db_name: str) -> Optional[Dict]:
     """
     Devuelve dict con usuario + tokens o None si la autenticación falla.
     """
-    user = _get_user_collection().find_one({"email": email, "status": True})
+    user = _get_user_collection(db_name).find_one({"email": email, "status": True})
     if not user:
         return None
 
@@ -59,9 +59,9 @@ def authenticate(email: str, password: str) -> Optional[Dict]:
     }
 
 
-def send_password_reset(email: str) -> bool:
+def send_password_reset(email: str, db_name: str) -> bool:
     # Simulación: busca el usuario y "envía" un correo de recuperación
-    user = _get_user_collection().find_one({"email": email, "status": True})
+    user = _get_user_collection(db_name).find_one({"email": email, "status": True})
     if not user:
         return False
     # Aquí iría la lógica para enviar el correo (SMTP, SES, etc.)

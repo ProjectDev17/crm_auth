@@ -3,6 +3,7 @@ import time
 from typing import Any, Dict, Tuple
 from uuid6 import uuid6
 from datetime import datetime
+from now_ts import timestamp
 
 # Dependencia externa que ya tienes en tu proyecto
 # from your_layer.mongo import get_database
@@ -63,14 +64,6 @@ def extract_user_info(event: Dict[str, Any]) -> Tuple[str, str]:
     created_by_user = user_data.get("sub") or "unknown"
     id_client = user_data.get("client_id") or "unknown"
     return created_by_user, id_client
-
-
-# =========================
-# Construcción del item
-# =========================
-def now_ts() -> int:
-    # Usa timestamp en segundos; equivalente a int(datetime.now().timestamp())
-    return int(time.time())
 
 
 def build_new_item(body: Dict[str, Any], created_by_user: str) -> Dict[str, Any]:
