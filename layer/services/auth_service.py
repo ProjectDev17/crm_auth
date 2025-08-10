@@ -1,14 +1,11 @@
 # python/services/auth_service.py
 import os
 import bcrypt
-import jwt
 import time
 from typing import Optional, Dict
 from services.db import get_mongo_client
 from utils.hash_password import verify_password  # Usa tu función de la layer
-
-JWT_SECRET = os.getenv("JWT_SECRET", "dev_secret")     # usa Secrets Manager
-JWT_EXP_SECS = int(os.getenv("JWT_EXP_SECS", "3600"))  # 1 h por defecto
+from utils.jwt_token import generate_jwt  # Usa tu función de la layer
 
 def _get_user_collection(db_name):
     client = get_mongo_client()
@@ -16,15 +13,6 @@ def _get_user_collection(db_name):
 
 def hash_password(plain: str) -> bytes:
     return bcrypt.hashpw(plain.encode(), bcrypt.gensalt())
-
-def generate_jwt(user_id: str, email: str) -> str:
-    payload = {
-        "sub": user_id,
-        "email": email,
-        "iat": int(time.time()),
-        "exp": int(time.time()) + JWT_EXP_SECS,
-    }
-    return jwt.encode(payload, JWT_SECRET, algorithm="HS256")
 
 def authenticate(email: str, password: str, db_name: str) -> Optional[Dict]:
     """
@@ -47,7 +35,7 @@ def authenticate(email: str, password: str, db_name: str) -> Optional[Dict]:
 
     # Genera access_token y refresh_token
     access_token = generate_jwt(str(user["_id"]), email)
-    refresh_token = "fake-refresh-token"  # Aquí pones la lógica real
+    refresh_token = generate_jwt_refresh(str(user["_id"]), email)
 
     return {
         "access_token": access_token,
