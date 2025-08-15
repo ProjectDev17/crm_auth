@@ -52,8 +52,6 @@ Resources:
     Properties:
       CodeUri: src/
       Handler: app.lambda_handler
-      Layers:
-        - !Ref CommonLayer
       Events:
         HttpApiLogin:
           Type: HttpApi

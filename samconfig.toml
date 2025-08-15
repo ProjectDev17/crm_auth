@@ -1,0 +1,10 @@
+version = 0.1
+[default.deploy.parameters]
+stack_name = "crm-auth"
+resolve_s3 = true
+s3_prefix = "crm-auth"
+region = "us-east-1"
+profile = "crm"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+image_repositories = []

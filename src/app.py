@@ -26,21 +26,21 @@ def lambda_handler(event, context):
     try:
         print(f"Processing {method} request for {path}")
         if method == "POST":
-            if path == "/login":
+            if path == "/login" or path == "/Prod/login":
                 return login_handler(event, context)
-            elif path == "/forgot-password":
+            elif path == "/forgot-password" or path == "/Prod/forgot-password":
                 return forgot_password_handler(event, context)
-            elif path == "/refresh-token":
+            elif path == "/refresh-token" or path == "/Prod/refresh-token":
                 return refresh_token_handler(event, context)
-            elif path == "/register":
+            elif path == "/register" or path == "/Prod/register":
                 return register_handler(event, context)
-            elif path == "/validate-token":
+            elif path == "/validate-token" or path == "/Prod/validate-token":
                 return validate_token_handler(event, context)
-            elif path == "/logout":
+            elif path == "/logout" or path == "/Prod/logout":
                 return logout_handler(event, context)
-            elif path == "/send-validation-email":
+            elif path == "/send-validation-email" or path == "/Prod/send-validation-email":
                 return send_validation_email_handler(event, context)
-            elif path == "/validate-email":
+            elif path == "/validate-email" or path == "/Prod/validate-email":
                 return validate_email_handler(event, context)
         return _response(405, {"error": f"Método {method} no soportado para {path}"})
 
