@@ -1,5 +1,5 @@
 import os, jwt
-from services.auth_service import JWT_SECRET
+from utils.jwt_token import JWT_SECRET
 
 def lambda_handler(event, context):
     token = _extract_token(event)
