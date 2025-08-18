@@ -1,6 +1,6 @@
 import json
 from services.db import get_database
-from utils.hash_password import hash_password  # Usa tu función de la layer
+from utils.hash_password import hash_password
 from utils.crud import build_new_item
 
 def lambda_handler(event, context):
@@ -26,7 +26,7 @@ def lambda_handler(event, context):
         body = {
             "email": email,
             "username": username,
-            "password": hash_password(password),  # Ahora usando bcrypt
+            "password": hash_password(password),
             "full_name": full_name,
             "email_verified": False
         }

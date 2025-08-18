@@ -1,5 +1,4 @@
 import sys
-sys.path.append('/opt')
 
 import json
 from services.auth_service import authenticate
