@@ -81,8 +81,21 @@ def lambda_handler(event, context):
                 "validation_token_sent_at": now
             }}
         )
+        frontend_url = "https://app.digitalcrm.net"
+        """
+        Envía el email de validación al usuario usando SMTP de Gmail.
+        """
+        validation_link = f"{frontend_url}/validate-email?token={token}"
+        
+        subject = "Valida tu cuenta"
+        body = f"""Hola,
+            Para validar tu cuenta, haz clic en el siguiente enlace:
+            {validation_link}
 
-        message = send_validation_email(email, new_token)
+            Si no solicitaste este registro, puedes ignorar este mensaje.
+        """
+
+        message = send_validation_email(email, new_token, subject, body)
         return _response(200, {
             "message": message,
             "reused": False

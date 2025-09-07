@@ -10,8 +10,10 @@ def lambda_handler(event, context):
     db_name = event["db_name"]
     if not email:
         return _res(400, {"message": "Email es requerido"})
+    title = "Restablecer contraseña"
+    body = f"Haz clic en el siguiente enlace para restablecer tu contraseña: https://app.digitalcrm.net/reset-password?token={new_token}"
 
-    ok = send_password_reset(email, db_name)
+    ok = send_password_reset(email, db_name, title, body)
     if not ok:
         return _res(404, {"message": "Usuario no encontrado"})
 
