@@ -19,8 +19,8 @@ def lambda_handler(event, context):
             return _response(400, {"error": "Faltan campos obligatorios"})
 
         # Verificar si existe usuario
-        if collection.find_one({"$or": [{"email": email}, {"username": username}]}):
-            return _response(409, {"error": "El usuario o email ya existe"})
+        if collection.find_one({"$or": [{"email": email}]}):
+            return _response(409, {"error": f"El email {email} ya está en uso"})
 
         # Crear usuario
         body = {

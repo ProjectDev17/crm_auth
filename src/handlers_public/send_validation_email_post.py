@@ -85,7 +85,7 @@ def lambda_handler(event, context):
         """
         Envía el email de validación al usuario usando SMTP de Gmail.
         """
-        validation_link = f"{frontend_url}/validate-email?token={token}"
+        validation_link = f"{frontend_url}/validate-email?token={new_token}"
         
         subject = "Valida tu cuenta"
         body = f"""Hola,
