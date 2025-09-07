@@ -10,7 +10,7 @@ Globals:
     Timeout: 10
     MemorySize: 256
     Layers:
-      - arn:aws:lambda:us-east-1:195275634967:layer:common-utils-py312:8
+      - arn:aws:lambda:us-east-1:195275634967:layer:common-utils-py312:16
     Environment:
       Variables:
         # Variables disponibles en todas las Lambdas
